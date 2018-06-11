@@ -1,0 +1,210 @@
+OleDbConnection konek;
+        OleDbCommand komanda;
+        OleDbDataAdapter adapter = new OleDbDataAdapter();
+        DataTable tabelaPecaros = new DataTable();
+        void Funkcija2()
+        {
+            string putanja = Environment.CurrentDirectory;
+            string[] putanjaBaze = putanja.Split(new string[] { "bin" }, StringSplitOptions.None);
+            AppDomain.CurrentDomain.SetData("DataDirectory", putanjaBaze[0]);
+            konek = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;
+                                        Data Source=|DataDirectory|\Pecarosi.accdb");
+            konek.Open();
+            komanda = new OleDbCommand("Select * from Pecaros order by PecarosID ASC", konek);
+            OleDbDataReader rd;
+            rd = komanda.ExecuteReader();
+            while (rd.Read())
+            {
+                comboBox1.Items.Add(rd[0].ToString() + "-" + rd[1].ToString());
+            }
+            rd.Close();
+            komanda.Dispose();
+            konek.Close();
+        }
+        public UlovPecarosa()
+        {
+            InitializeComponent();
+        }
+
+        private void Pecarosi_Load(object sender, EventArgs e)
+        {
+            string putanja = Environment.CurrentDirectory;
+            string[] putanjaBaze = putanja.Split(new string[] { "bin" }, StringSplitOptions.None);
+            AppDomain.CurrentDomain.SetData("DataDirectory", putanjaBaze[0]);
+            konek = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;
+                                        Data Source=|DataDirectory|\Pecarosi.accdb");
+            Funkcija2();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+
+            try
+            {
+                dataGridView1.Rows.Clear();
+                konek.Open();
+
+                string kom1 = "Select * from Vrsta_Ribe";
+                OleDbDataReader rd1, rd2;
+                string series = "Ulov";
+                chart1.Series.Clear();
+                chart1.Legends.Clear();
+                chart1.Series.Add(series);
+                chart1.Series[series].ChartType = SeriesChartType.Pie;
+
+                OleDbCommand komanda = new OleDbCommand(kom1, konek);
+                rd1 = komanda.ExecuteReader();
+                int n = 0;
+                while (rd1.Read())
+                {
+                    n++;
+                }
+                konek.Close();
+
+                if (tbDatum1.Text != "" && tbDatum2.Text != "" && comboBox1.Text != "")
+                {
+                    for (int i = 0; i < n; i++)
+                    {
+                        string kom = "SELECT Vrsta_Ribe.Naziv, COUNT(*) AS Broj FROM (Pecaros INNER JOIN Ulov ON Pecaros.PecarosID=Ulov.PecarosID) INNER JOIN Vrsta_Ribe ON Vrsta_Ribe.VrstaID=Ulov.VrstaID WHERE Pecaros.PecarosID=@PecarosID AND Ulov.VrstaID=@VrstaRibe AND Ulov.Datum BETWEEN @datum1 AND @datum2 GROUP BY Vrsta_Ribe.Naziv";
+                        OleDbCommand komanda1 = new OleDbCommand(kom, konek);
+                        string[] splinter = comboBox1.Text.Split('-');
+                        komanda1.Parameters.AddWithValue("@PecarosID", Convert.ToInt32(splinter[0]));
+                        komanda1.Parameters.AddWithValue("@VrstaRibe", i + 1);
+                        DateTime d;
+                        if (DateTime.TryParse(tbDatum1.Text, out d) == true)
+                        {
+                            DateTime datum = DateTime.Parse(tbDatum1.Text);
+                            komanda1.Parameters.Add("@datum1", OleDbType.DBDate).Value = datum;
+                        }
+                        else
+                        {
+                            throw new FormatException();
+
+                        }
+                        if (DateTime.TryParse(tbDatum1.Text, out d) == true)
+                        {
+                            DateTime datum = DateTime.Parse(tbDatum2.Text);
+                            komanda1.Parameters.Add("@datum2", OleDbType.DBDate).Value = datum;
+                        }
+                        else
+                        {
+                            throw new Exception();
+
+                        }
+                        DateTime datum2 = DateTime.Parse(tbDatum2.Text);
+                        //komanda1.Parameters.AddWithValue("@datum1", datum1);
+                        //komanda1.Parameters.AddWithValue("@datum2", datum2);
+                        konek.Open();
+                        rd2 = komanda1.ExecuteReader();
+
+                        if (rd2.HasRows)
+                        {
+                            rd2.Read();
+                            DataGridViewRow row = (DataGridViewRow)dataGridView1.Rows[0].Clone();
+                            row.Cells[0].Value = rd2[0].ToString();
+                            row.Cells[1].Value = rd2[1].ToString();
+                            dataGridView1.Rows.Add(row);
+                            string nazivr = rd2[0].ToString();
+                            int broj = Int32.Parse(rd2[1].ToString());
+
+                            chart1.Series[series].Points.AddXY(nazivr, broj);
+                            chart1.Legends.Add(nazivr);
+                        }
+                        konek.Close();
+                    }
+                }
+                else if (tbDatum1.Text == "" && tbDatum2.Text != "" && comboBox1.Text != "")
+                {
+                    for (int i = 0; i < n; i++)
+                    {
+                        string kom = "SELECT Vrsta_Ribe.Naziv, COUNT(*) AS Broj FROM (Pecaros INNER JOIN Ulov ON Pecaros.PecarosID=Ulov.PecarosID) INNER JOIN Vrsta_Ribe ON Vrsta_Ribe.VrstaID=Ulov.VrstaID WHERE Pecaros.PecarosID=@PecarosID AND Ulov.VrstaID=@VrstaRibe AND Ulov.Datum < @datum2 GROUP BY Vrsta_Ribe.Naziv";
+                        OleDbCommand komanda1 = new OleDbCommand(kom, konek);
+                        string[] splinter = comboBox1.Text.Split('-');
+                        komanda1.Parameters.AddWithValue("@PecarosID", Convert.ToInt32(splinter[0]));
+                        komanda1.Parameters.AddWithValue("@VrstaRibe", i + 1);
+                        DateTime d;
+                        if (DateTime.TryParse(tbDatum2.Text, out d) == true)
+                        {
+                            DateTime datum = DateTime.Parse(tbDatum2.Text);
+                            komanda1.Parameters.Add("@datum2", OleDbType.DBDate).Value = datum;
+                        }
+                        else
+                        {
+                            throw new Exception();
+
+                        }
+                        konek.Open();
+                        rd2 = komanda1.ExecuteReader();
+
+                        if (rd2.HasRows)
+                        {
+                            rd2.Read();
+                            DataGridViewRow row = (DataGridViewRow)dataGridView1.Rows[0].Clone();
+                            row.Cells[0].Value = rd2[0].ToString();
+                            row.Cells[1].Value = rd2[1].ToString();
+                            dataGridView1.Rows.Add(row);
+                            string nazivr = rd2[0].ToString();
+                            int broj = Int32.Parse(rd2[1].ToString());
+
+                            chart1.Series[series].Points.AddXY(nazivr, broj);
+                            chart1.Legends.Add(nazivr);
+                        }
+                        konek.Close();
+                    }
+                }
+                else if (tbDatum1.Text != "" && tbDatum2.Text == "" && comboBox1.Text != "")
+                {
+                    for (int i = 0; i < n; i++)
+                    {
+                        string kom = "SELECT Vrsta_Ribe.Naziv, COUNT(*) AS Broj FROM (Pecaros INNER JOIN Ulov ON Pecaros.PecarosID=Ulov.PecarosID) INNER JOIN Vrsta_Ribe ON Vrsta_Ribe.VrstaID=Ulov.VrstaID WHERE Pecaros.PecarosID=@PecarosID AND Ulov.VrstaID=@VrstaRibe AND Ulov.Datum > @datum1 GROUP BY Vrsta_Ribe.Naziv";
+                        OleDbCommand komanda1 = new OleDbCommand(kom, konek);
+                        string[] splinter = comboBox1.Text.Split('-');
+                        komanda1.Parameters.AddWithValue("@PecarosID", Convert.ToInt32(splinter[0]));
+                        komanda1.Parameters.AddWithValue("@VrstaRibe", i + 1);
+                        DateTime d;
+                        if (DateTime.TryParse(tbDatum1.Text, out d) == true)
+                        {
+                            DateTime datum = DateTime.Parse(tbDatum1.Text);
+                            komanda1.Parameters.Add("@datum1", OleDbType.DBDate).Value = datum;
+                        }
+                        else
+                        {
+                            throw new Exception();
+
+                        }
+                        konek.Open();
+                        rd2 = komanda1.ExecuteReader();
+
+                        if (rd2.HasRows)
+                        {
+                            rd2.Read();
+                            DataGridViewRow row = (DataGridViewRow)dataGridView1.Rows[0].Clone();
+                            row.Cells[0].Value = rd2[0].ToString();
+                            row.Cells[1].Value = rd2[1].ToString();
+                            dataGridView1.Rows.Add(row);
+                            string nazivr = rd2[0].ToString();
+                            int broj = Int32.Parse(rd2[1].ToString());
+
+                            chart1.Series[series].Points.AddXY(nazivr, broj);
+                            chart1.Legends.Add(nazivr);
+                        }
+                        konek.Close();
+                    }
+                }
+                else
+                {
+                    throw new FormatException();
+                }
+            }
+            catch (FormatException)
+            {
+                MessageBox.Show("Izaberite stavku iz combobox-a i upisite bar jedan datum");
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Neispravan format datuma!");
+            }
+           
+            
+            
+        }
