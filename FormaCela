@@ -270,7 +270,11 @@ OleDbConnection konek;
 
                     ime = tbIme.Text;
                     prezime = tbPrezime.Text;
-
+                    
+                    OleDbCommand com = new OleDbCommand("SELECT GradID From Grad WHERE Grad='" + cmbGrad.Text + "'",konek);
+                    rider = com.ExecuteReader();
+                    rider.Read();
+                    int a = Convert.ToInt32(rider[0]);
 
                     
                     komanda.Parameters.AddWithValue("@Ime", ime);
@@ -283,7 +287,7 @@ OleDbConnection konek;
                     brtel = Convert.ToInt32(tbTelefon.Text);
                     komanda.Parameters.AddWithValue("@Telefon", brtel);
 
-                    komanda.Parameters.AddWithValue("@GradID",Math.Abs(Convert.ToInt32(cmbGrad.SelectedIndex)-1));
+                    komanda.Parameters.AddWithValue("@GradID",a);
                     komanda.Parameters.AddWithValue("@PecarosID", id);
                     komanda.ExecuteNonQuery();
                     MessageBox.Show("Uspesno azurirano!", "Informacija", MessageBoxButtons.OK, MessageBoxIcon.Information);
