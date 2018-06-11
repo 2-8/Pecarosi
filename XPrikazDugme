@@ -1,0 +1,76 @@
+private void prikaz_Click(object sender, EventArgs e)
+        {
+            if(tbOpis.Text!="")
+            {
+                dataGridView1.Rows.Clear();
+                if (cbCelaRec.Checked == true && cbVelMalSlova.Checked == false)
+                {
+                    con.Open();
+                    string cmd = "SELECT * FROM Vrsta_Ribe WHERE ' ' & Opis & ' ' LIKE '% " + tbOpis.Text + " %';";
+                    komanda = new OleDbCommand(cmd, con);
+                    try
+                    {
+                        reader = komanda.ExecuteReader();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                    while (true)
+                    {
+                        try
+                        {
+                            reader.Read();
+                            dataGridView1.Rows.Add(reader[0], reader[1], reader[2]);
+                        }
+                        catch (Exception ex)
+                        {
+
+                            break;
+                        }
+                    }
+                    con.Close();
+                }
+                else if (cbVelMalSlova.Checked == true && cbCelaRec.Checked == false)
+                {
+                    //dopuni...
+                }
+                else if (cbCelaRec.Checked == true && cbVelMalSlova.Checked == true)
+                {
+                    //dopuni...
+                }
+                else
+                {
+                    con.Open();
+                    string cmd = "SELECT * FROM Vrsta_Ribe WHERE Opis LIKE '%" + tbOpis.Text + "%'";
+                    komanda = new OleDbCommand(cmd, con);
+                    try
+                    {
+                        reader = komanda.ExecuteReader();
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show(ex.Message);
+                    }
+                    while (true)
+                    {
+                        try
+                        {
+                            reader.Read();
+                            dataGridView1.Rows.Add(reader[0], reader[1], reader[2]);
+                        }
+                        catch (Exception ex)
+                        {
+
+                            break;
+                        }
+                    }
+                    con.Close();
+                }
+            }
+            else
+            {
+                MessageBox.Show("Popunite tbOpis!");
+                tbOpis.Focus();
+            }
+        }
