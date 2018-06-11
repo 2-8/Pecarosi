@@ -1,0 +1,16 @@
+private void rbBrisanje_CheckedChanged(object sender, EventArgs e)
+        {
+            restartuj();
+        }
+
+        private void rbUpis_CheckedChanged(object sender, EventArgs e)
+        {
+            con.Open();
+            komanda = new OleDbCommand("SELECT * FROM Ulov WHERE RbrUlova=(SELECT MAX(RbrUlova) FROM Ulov)", con);
+            komanda.ExecuteNonQuery();
+            reader = komanda.ExecuteReader();
+            reader.Read();
+            int max= Convert.ToInt32(reader[1].ToString())+1;
+            tbRedniBrojUlova.Text = max.ToString();
+            con.Close();
+        }
