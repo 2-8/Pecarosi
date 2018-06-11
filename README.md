@@ -1,1 +1,1 @@
-# Pecarosi
+# Usefull functions for graph picturebox clearing
