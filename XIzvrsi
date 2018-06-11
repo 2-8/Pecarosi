@@ -1,0 +1,81 @@
+private void button1_Click(object sender, EventArgs e)
+        {
+            int VrstaID;
+            string koman = "SELECT VrstaID FROM Vrsta_Ribe WHERE Naziv=@Naziv";
+            OleDbCommand cmd = new OleDbCommand(koman, con);
+            cmd.Parameters.AddWithValue("@Naziv", cbVrstaRIbe.Text);
+            con.Open();
+            reader = cmd.ExecuteReader();
+            reader.Read();
+            VrstaID = Int32.Parse(reader[0].ToString());
+            con.Close();
+            if (rbUpis.Checked == true)
+            {
+                string s = cbPecaros.Text;
+                int i = s.IndexOf('-');
+                string pom;
+                pom = s.Substring(0, i);
+                if (cbPecaros.Text == "" || cbVrstaRIbe.Text == "")
+                {
+                    MessageBox.Show("Polja pecaros i Vrsta ribe su obavezna!");
+                }
+                else
+                {
+                    try
+                    {
+                        string datum, vreme, rbUlova;
+                        int pecarosID;
+                        datum = MbDatum.Text;
+                        vreme = MbVreme.Text;
+                        rbUlova = tbRedniBrojUlova.Text;
+                        pecarosID = Convert.ToInt32(pom);
+                        string kom = "insert into Ulov (PecarosID,RbrUlova,VrstaID,Datum,Vreme) values ('" + pecarosID + "', '" + rbUlova + "', '" + VrstaID.ToString() + "', '" + datum + "', '" + vreme + "')";
+                        komanda = new OleDbCommand(kom, con);
+                        try
+                        {
+                            con.Open();
+                            komanda.ExecuteNonQuery();
+                            MessageBox.Show("Uspesno upisano u bazu!");
+                            con.Close();
+                            restartuj();
+                        }
+                        catch
+                        {
+                            MessageBox.Show("Greska prilikom upisau datoteku, proverite da li su podaci pravilno uneti!");
+                        }
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Greska prilikom upisa u datoteku, proverite da li su svi podaci ispravni!");
+                    }
+                    con.Close();
+                }
+            }
+            else if (rbBrisanje.Checked == true)
+            {
+                string kom = "DELETE * FROM Ulov WHERE PecarosID=@a AND RbrUlova=@b";
+                string s = cbPecaros.Text;
+                int i = s.IndexOf('-');
+                string pom;
+                pom = s.Substring(0, i);
+                komanda = new OleDbCommand(kom, con);
+                komanda.Parameters.AddWithValue("@a", pom);
+                komanda.Parameters.AddWithValue("@b", tbRedniBrojUlova.Text);
+                try
+                {
+                    con.Open();
+                    komanda.ExecuteNonQuery();
+                    MessageBox.Show("Stavka je uspesno obrisana iz baze!");
+                    con.Close();
+                    restartuj();
+                }
+                catch
+                {
+                    MessageBox.Show("ERROR");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Morate izabrati jednu akciju!");
+            }
+        }
