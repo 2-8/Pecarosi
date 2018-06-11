@@ -1,0 +1,63 @@
+ OleDbCommand komanda;
+        OleDbConnection con,konekcija;
+        OleDbDataReader reader;
+        OleDbDataAdapter adapter;
+        DataTable tabela;
+        public frmUlov()
+        {
+            InitializeComponent();
+            string putanja = Environment.CurrentDirectory;
+            string[] putanjaBaze = putanja.Split(new string[] { "bin" }, StringSplitOptions.None);
+            AppDomain.CurrentDomain.SetData("DataDirectory", putanjaBaze[0]);
+            con = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=|DataDirectory|\Pecarosi.accdb");
+            konekcija = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;Data Source=|DataDirectory|\Pecarosi.accdb");
+        }
+
+        private void restartuj()
+        {
+            tbRedniBrojUlova.Clear();
+            MbDatum.Clear();
+            MbVreme.Clear();
+            cbPecaros.Text = "";
+            cbVrstaRIbe.Text = "";
+        }
+        private void restart_i_uvecanje_za_jedan()
+        {
+            string s;
+            int i = Convert.ToInt32(tbRedniBrojUlova.Text) + 1;
+            s = i.ToString();
+            tbRedniBrojUlova.Text = s;
+            MbDatum.Clear();
+            MbVreme.Clear();
+            cbPecaros.Text = "";
+            cbVrstaRIbe.Text = "";
+        }
+        private void frmUlov_Load(object sender, EventArgs e)
+        {
+            con.Open();
+            MessageBox.Show("Baza je uspesno otvorena!");
+            string cmd = "SELECT PecarosID,Ime,Prezime FROM Pecaros ";
+            komanda = new OleDbCommand(cmd, con);
+            komanda.ExecuteNonQuery();
+            reader = komanda.ExecuteReader();
+            string s;
+            while (reader.Read())
+            {
+                s = reader[0] + "-" + reader[1] + " " + reader[2];
+                cbPecaros.Items.Add(s);
+            }
+            con.Close();
+
+            con.Open();
+            string cmd1 = "SELECT Naziv From Vrsta_Ribe ORDER BY Naziv ASC";
+            komanda = new OleDbCommand(cmd1, con);
+            komanda.ExecuteNonQuery();
+            reader = komanda.ExecuteReader();
+            string s1;
+            while (reader.Read())
+            {
+                s1 = reader[0].ToString();
+                cbVrstaRIbe.Items.Add(s1);
+            }
+            con.Close();
+        }
