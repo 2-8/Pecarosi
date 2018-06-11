@@ -1,0 +1,47 @@
+private void cbPecaros_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (rbBrisanje.Checked == true)
+            {
+                if (cbPecaros.Text != "")
+                {
+                   try
+                    {
+                        con.Open();
+                        string s = cbPecaros.Text;
+                        int i = s.IndexOf('-');
+                        string pom;
+                        pom = s.Substring(0, i);
+                        int sifra = Convert.ToInt32(pom);
+                        OleDbCommand komanda = new OleDbCommand("SELECT * FROM Ulov WHERE PecarosID =@a AND Vreme=(SELECT MAX(Vreme) FROM Ulov WHERE PecarosID =@a AND Datum=(SELECT MAX(Datum) FROM Ulov WHERE PecarosID = @a))", con);
+                        komanda.Parameters.AddWithValue("@a", pom);
+                        OleDbDataReader readerNaziv = komanda.ExecuteReader();
+                        readerNaziv.Read();
+                        tbRedniBrojUlova.Text = readerNaziv[1].ToString();
+                        DateTime d = Convert.ToDateTime(readerNaziv[2].ToString());
+                        MbDatum.Text = d.ToString("MM/dd/yyyy");
+                        DateTime d1 = Convert.ToDateTime(readerNaziv[3].ToString());
+                        MbVreme.Text = d1.ToString("hh/mm");
+                        int vr = Convert.ToInt32(readerNaziv[4].ToString());
+                    konekcija.Open();
+                    string pom1 = "SELECT Naziv FROM Vrsta_Ribe WHERE VrstaID=@vr";
+                        OleDbCommand kom = new OleDbCommand(pom1, con);
+                    kom.Parameters.AddWithValue("@vr", vr.ToString());
+                    kom.ExecuteNonQuery();
+                        reader = kom.ExecuteReader();
+                        reader.Read();
+                        cbVrstaRIbe.Text = reader[0].ToString();
+                        konekcija.Close();
+                        con.Close();
+                    }
+                    catch
+                    {
+                        MessageBox.Show("Nema podataka o selektovanom pecarosu!");
+                    }
+                    con.Close();
+                }
+                else
+                {
+                    restartuj();
+                }
+            }
+        }
