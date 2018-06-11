@@ -1,0 +1,450 @@
+OleDbConnection konek;
+        OleDbCommand komanda;
+        OleDbDataAdapter adapter = new OleDbDataAdapter();
+        OleDbDataReader rider;
+        OleDbDataReader rider1;
+        DataTable tabelaPecaros = new DataTable();
+        int Funkcija()
+        {
+            konek.Open();
+            OleDbCommand komanda2 = new OleDbCommand("Select * from Pecaros order by PecarosID", konek);
+            rider = komanda2.ExecuteReader();
+           
+
+            int br = 0;
+            while(rider.Read())
+            {
+                if (tbSifra.Text == rider[0].ToString())
+                {
+                    br++;
+                }
+            }
+            konek.Close();
+            if (br == 0)
+                return 0;
+            else
+                return 1;
+
+
+        }
+        void Funkcija2()
+        {
+            string putanja = Environment.CurrentDirectory;
+            string[] putanjaBaze = putanja.Split(new string[] { "bin" }, StringSplitOptions.None);
+            AppDomain.CurrentDomain.SetData("DataDirectory", putanjaBaze[0]);
+            konek = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;
+                                        Data Source=|DataDirectory|\Pecarosi.accdb");
+            konek.Open();
+            komanda = new OleDbCommand("Select * from Pecaros order by PecarosID ASC", konek);
+            OleDbDataReader rd;
+            rd = komanda.ExecuteReader();
+            listView1.Items.Clear();
+            while (rd.Read())
+            {
+                ListViewItem lv = new ListViewItem(rd[0].ToString());
+                lv.SubItems.Add(rd[1].ToString());
+                lv.SubItems.Add(rd[2].ToString());
+                lv.SubItems.Add(rd[3].ToString());
+                lv.SubItems.Add(rd[4].ToString());
+               OleDbCommand komanda1 = new OleDbCommand("Select * from Grad where GradID=@grad", konek);
+                komanda1.Parameters.AddWithValue("@grad", rd[5]);
+                OleDbDataReader rd1;
+                rd1 =komanda1.ExecuteReader();
+                rd1.Read();
+                lv.SubItems.Add(rd1[1].ToString());
+                listView1.Items.Add(lv);
+            }
+            rd.Close();
+            komanda.Dispose();
+            konek.Close();
+        }
+        public Pecarosi()
+        {
+            InitializeComponent();
+        }
+
+        private void izlazToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void btnIzadji_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void FrmGlavna_Load(object sender, EventArgs e)
+        {
+            string putanja = Environment.CurrentDirectory;
+            string[] putanjaBaze = putanja.Split(new string[] { "bin" }, StringSplitOptions.None);
+            AppDomain.CurrentDomain.SetData("DataDirectory", putanjaBaze[0]);
+            konek = new OleDbConnection(@"Provider=Microsoft.ACE.OLEDB.12.0;
+                                        Data Source=|DataDirectory|\Pecarosi.accdb");
+            cmbGrad.Text = "Izaberi grad";
+            konek.Open();
+            OleDbCommand komanda3 = new OleDbCommand("Select * from Grad order by Grad", konek);
+            rider1 = komanda3.ExecuteReader();
+            while(rider1.Read())
+            {
+                cmbGrad.Items.Add(rider1[1]);
+            }
+            konek.Close();
+            Funkcija2();
+
+        }
+
+        private void btnUpisi_Click(object sender, EventArgs e)
+        {
+            if (tbSifra.Text != "" && tbIme.Text != "" && tbPrezime.Text != "" && cmbGrad.Text != "")
+            {
+                if (Funkcija() == 0)
+                {
+                    konek.Open();
+                    string ime, prezime, adresa;
+                    int id = Convert.ToInt32(tbSifra.Text), brtel;
+                    ime = tbIme.Text;
+                    prezime = tbPrezime.Text;
+
+                    
+                    OleDbCommand komanda2 = new OleDbCommand("Select GradID,Grad from Grad WHERE Grad=@Grad", konek);
+                    OleDbDataReader r;
+                    komanda2.Parameters.Add("@Grad", OleDbType.VarChar).Value = cmbGrad.Text;
+                    r = komanda2.ExecuteReader();
+                    r.Read();
+                  
+                   
+                    int grad = Convert.ToInt32(r[0]);
+                    if (tbAdresa.Text != "" && tbTelefon.Text != "")
+                    {
+                        OleDbCommand cmd = new OleDbCommand("Insert into Pecaros (PecarosID, Ime, Prezime,Adresa,Telefon,GradID) Values (@PecarosID, @Ime, @Prezime, @Adresa, @Telefon, @GradID)", konek);
+                        cmd.Parameters.Add("@PecarosID", OleDbType.Numeric).Value = id;
+                        cmd.Parameters.Add("@Ime", OleDbType.VarChar).Value = ime;
+                        cmd.Parameters.Add("@Prezime", OleDbType.VarChar).Value = prezime;
+
+                        adresa = tbAdresa.Text;
+                        cmd.Parameters.Add("@Adresa", OleDbType.VarChar).Value = adresa;
+
+                        brtel = Convert.ToInt32(tbTelefon.Text);
+                        cmd.Parameters.Add("@Telefon", OleDbType.VarChar).Value = brtel;
+
+                        cmd.Parameters.Add("@GradID", OleDbType.Numeric).Value = grad;
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Uspesan unos u bazu!", "Obavestenje");
+
+                        tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+                        cmbGrad.Text = "";
+                    }
+                    else if (tbAdresa.Text == "" && tbTelefon.Text != "")
+                    {
+                        OleDbCommand cmd = new OleDbCommand("Insert into Pecaros (PecarosID, Ime, Prezime,Telefon,GradID) Values (@PecarosID, @Ime, @Prezime, @Telefon, @GradID)", konek);
+                        cmd.Parameters.Add("@PecarosID", OleDbType.Numeric).Value = id;
+                        cmd.Parameters.Add("@Ime", OleDbType.VarChar).Value = ime;
+                        cmd.Parameters.Add("@Prezime", OleDbType.VarChar).Value = prezime;
+
+                        brtel = Convert.ToInt32(tbTelefon.Text);
+                        cmd.Parameters.Add("@Telefon", OleDbType.VarChar).Value = brtel;
+
+                        cmd.Parameters.Add("@GradID", OleDbType.Numeric).Value = grad;
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Uspesan unos u bazu!", "Obavestenje");
+
+                        tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+                        cmbGrad.Text = "";
+                    }
+                    else if (tbAdresa.Text != "" && tbTelefon.Text == "")
+                    {
+                        OleDbCommand cmd = new OleDbCommand("Insert into Pecaros (PecarosID, Ime, Prezime,Adresa,GradID) Values (@PecarosID, @Ime, @Prezime, @Adresa, @GradID)", konek);
+                        cmd.Parameters.Add("@PecarosID", OleDbType.Numeric).Value = id;
+                        cmd.Parameters.Add("@Ime", OleDbType.VarChar).Value = ime;
+                        cmd.Parameters.Add("@Prezime", OleDbType.VarChar).Value = prezime;
+
+                        adresa = tbAdresa.Text;
+                        cmd.Parameters.Add("@Adresa", OleDbType.VarChar).Value = adresa;
+
+                        cmd.Parameters.Add("@GradID", OleDbType.Numeric).Value = grad;
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Uspesan unos u bazu!", "Obavestenje");
+
+                        tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+                        cmbGrad.Text = "";
+                    }
+                    else
+                    {
+                        OleDbCommand cmd = new OleDbCommand("Insert into Pecaros (PecarosID, Ime, Prezime,GradID) Values (@PecarosID, @Ime, @Prezime, @GradID)", konek);
+                        cmd.Parameters.Add("@PecarosID", OleDbType.Numeric).Value = id;
+                        cmd.Parameters.Add("@Ime", OleDbType.VarChar).Value = ime;
+                        cmd.Parameters.Add("@Prezime", OleDbType.VarChar).Value = prezime;
+                        cmd.Parameters.Add("@GradID", OleDbType.Numeric).Value = grad;
+                        cmd.ExecuteNonQuery();
+                        MessageBox.Show("Uspesan unos u bazu!", "Obavestenje");
+
+                        tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+                        cmbGrad.Text = "";
+                    }
+
+                    Funkcija2();
+                    konek.Close();
+                }
+                else
+                {
+                    MessageBox.Show("Uneti Id vec postoji!", " Obavestenje");
+                }
+            }
+            else
+            {
+                MessageBox.Show("Popunite obavezna poolja", "Obavestenje");
+            }
+        }
+
+        private void btnObrisi_Click(object sender, EventArgs e)
+        {
+           
+            string putanja = Environment.CurrentDirectory;
+            string[] putanjaBaze = putanja.Split(new string[] { "bin" }, StringSplitOptions.None);
+            AppDomain.CurrentDomain.SetData("DataDirectory", putanjaBaze[0]);
+            konek.Open();
+           
+                string del = "DELETE * FROM PECAROS WHERE PecarosID=@id";
+               // string del3 = "DELETE * ULOGA WHERE GlumacID=@id";
+                komanda = new OleDbCommand(del, konek);
+                //komanda3 = new OleDbCommand(del3, konek);
+                komanda.Parameters.AddWithValue("@id", tbSifra.Text);
+                //komanda3.Parameters.AddWithValue("@id", tbSifra.Text);
+
+                try
+                {
+                   
+                    komanda.ExecuteNonQuery();
+                    //komanda3.ExecuteNonQuery();
+                    
+                    MessageBox.Show("Stavka je uspesno obrisana!", "Informacija", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    Funkcija2();
+                }
+                catch
+                {
+                    MessageBox.Show("Greska pri brisanju!", "Greska", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                tbSifra.Clear();
+           
+            //konek.Close();
+            //konek.Open();
+            //komanda = new OleDbCommand("Select * from Pecaros order by PecarosID ASC", konek);
+            //OleDbDataReader rd;
+            //rd = komanda.ExecuteReader();
+            //listView1.Items.Clear();
+            //while (rd.Read())
+            //{
+            //    ListViewItem lv = new ListViewItem(rd[0].ToString());
+            //    lv.SubItems.Add(rd[1].ToString());
+            //    lv.SubItems.Add(rd[2].ToString());
+            //     lv.SubItems.Add(rd[3].ToString());
+            //     lv.SubItems.Add(rd[4].ToString());
+
+            //    listView1.Items.Add(lv);
+            //}
+            //rd.Close();
+            //komanda.Dispose();
+            //konek.Close();
+            tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+            cmbGrad.Text = "";
+            
+        
+        }
+
+        private void btnIzmeni_Click(object sender, EventArgs e)
+        {
+            konek.Open();
+            string kom = "Update Pecaros set [Ime] = @Ime, [Prezime] = @Prezime, [Adresa] = @Adresa,[Telefon] = @Telefon, [GradID] = @GradID where [PecarosID] =  @PecarosID";
+            string kom1 = "Update Pecaros set [Ime] = @Ime, [Prezime] = @Prezime,[Telefon] = @Telefon, [GradID] = @GradID where [PecarosID] =  @PecarosID";
+            string kom2 = "Update Pecaros set [Ime] = @Ime, [Prezime] = @Prezime, [Adresa] = @Adresa, [GradID] = @GradID where [PecarosID] =  @PecarosID";
+            string kom3 = "Update Pecaros set [Ime] = @Ime, [Prezime] = @Prezime, [GradID] = @GradID where [PecarosID] =  @PecarosID";
+
+            try
+            {
+
+                if (tbIme.Text != "" && tbPrezime.Text != "" && tbSifra.Text != "" && cmbGrad.Text != "" && tbAdresa.Text !="" && cmbGrad.Text!="" && tbTelefon.Text != "")
+                {
+                    komanda = new OleDbCommand(kom, konek);
+                    string ime, prezime, adresa;
+                    int id = int.Parse(tbSifra.Text),brtel;
+
+                    ime = tbIme.Text;
+                    prezime = tbPrezime.Text;
+
+
+                    
+                    komanda.Parameters.AddWithValue("@Ime", ime);
+
+                    komanda.Parameters.AddWithValue("@Prezime", prezime);
+
+                    adresa = tbAdresa.Text;
+                    komanda.Parameters.AddWithValue("@Adresa", adresa);
+
+                    brtel = Convert.ToInt32(tbTelefon.Text);
+                    komanda.Parameters.AddWithValue("@Telefon", brtel);
+
+                    komanda.Parameters.AddWithValue("@GradID",Math.Abs(Convert.ToInt32(cmbGrad.SelectedIndex)-1));
+                    komanda.Parameters.AddWithValue("@PecarosID", id);
+                    komanda.ExecuteNonQuery();
+                    MessageBox.Show("Uspesno azurirano!", "Informacija", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+                }
+                else if (tbIme.Text != "" && tbPrezime.Text != "" && tbSifra.Text != "" && cmbGrad.Text != "" && cmbGrad.Text!="" && tbTelefon.Text !="")
+                {
+                    komanda = new OleDbCommand(kom1, konek);
+                    string ime, prezime;
+                    int id = int.Parse(tbSifra.Text),brtel;
+
+                    ime = tbIme.Text;
+                    prezime = tbPrezime.Text;
+
+
+                   
+                    komanda.Parameters.AddWithValue("@Ime", ime);
+
+                    komanda.Parameters.AddWithValue("@Prezime", prezime);
+
+                    
+
+                    brtel = Convert.ToInt32(tbTelefon.Text);
+                    komanda.Parameters.AddWithValue("@Telefon", brtel);
+
+                    komanda.Parameters.AddWithValue("@GradID",Math.Abs(Convert.ToInt32(cmbGrad.SelectedIndex)-1));
+                    komanda.Parameters.AddWithValue("@PecarosID", id);
+                    komanda.ExecuteNonQuery();
+                    MessageBox.Show("Uspesno azurirano!", "Informacija", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+                
+                }
+                else if (tbIme.Text != "" && tbPrezime.Text != "" && tbSifra.Text != "" && cmbGrad.Text != "" && tbAdresa.Text != "" && cmbGrad.Text != "")
+                {
+                    komanda = new OleDbCommand(kom2, konek);
+                    string ime, prezime, adresa;
+                    int id = int.Parse(tbSifra.Text);
+
+                    ime = tbIme.Text;
+                    prezime = tbPrezime.Text;
+
+
+                    
+                    komanda.Parameters.AddWithValue("@Ime", ime);
+
+                    komanda.Parameters.AddWithValue("@Prezime", prezime);
+
+                    adresa = tbAdresa.Text;
+                    komanda.Parameters.AddWithValue("@Adresa", adresa);
+
+                    komanda.Parameters.AddWithValue("@GradID", Math.Abs(Convert.ToInt32(cmbGrad.SelectedIndex) - 1));
+                    komanda.Parameters.AddWithValue("@PecarosID", id);
+                    komanda.ExecuteNonQuery();
+                    MessageBox.Show("Uspesno azurirano!", "Informacija", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+                }
+                else if (tbIme.Text != "" && tbPrezime.Text != "" && tbSifra.Text != "" && cmbGrad.Text != "" && cmbGrad.Text != "")
+                {
+                    komanda = new OleDbCommand(kom3, konek);
+                    string ime, prezime;
+                    int id = int.Parse(tbSifra.Text);
+
+                    ime = tbIme.Text;
+                    prezime = tbPrezime.Text;
+
+
+                    
+                    komanda.Parameters.AddWithValue("@Ime", ime);
+
+                    komanda.Parameters.AddWithValue("@Prezime", prezime);
+
+                    komanda.Parameters.AddWithValue("@GradID", Math.Abs(Convert.ToInt32(cmbGrad.SelectedIndex) - 1));
+                    komanda.Parameters.AddWithValue("@PecarosID", id);
+                    komanda.ExecuteNonQuery();
+                    MessageBox.Show("Uspesno azurirano!", "Informacija", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+
+                }
+                else
+                {
+                    MessageBox.Show("Popunite obavezna polja!");
+                }
+
+
+
+
+            }
+            catch (Exception ex1)
+            {
+                MessageBox.Show(ex1.ToString(), "Neuspelo!");
+            }
+            konek.Close();
+            
+            Funkcija2();
+
+
+            tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+            cmbGrad.Text = "";
+
+
+
+           
+        }
+
+        private void tbSifra_TextChanged(object sender, EventArgs e)
+        {
+            if (tbSifra.Text != "")
+            {
+               if (Funkcija() == 0)
+                {
+                    MessageBox.Show("Uneti Id ne postoji!", " Obavestenje");
+                    tbIme.Text = tbPrezime.Text = tbAdresa.Text  = tbTelefon.Text = "";
+                    cmbGrad.Text = "";
+                }
+
+                else
+                {
+                    int n = Int32.Parse(tbSifra.Text);
+
+
+                    konek.Open();
+                    komanda = new OleDbCommand("Select * from Pecaros order by PecarosID ASC", konek);
+                    OleDbDataReader rd;
+                    rd = komanda.ExecuteReader();
+                    int br = 0;
+                    while (rd.Read())
+                    {
+                        if (rd[0].ToString() == tbSifra.Text)
+                            br++;
+                    }
+                    if (br == 0)
+                    {
+                        MessageBox.Show("Unesti ID ne postoji!", "Obavestenje");
+                    }
+                    else
+                    {
+                        komanda = new OleDbCommand("Select * from Pecaros Where PecarosID=@PecarosID", konek);
+                        komanda.Parameters.AddWithValue("@PecarosID", n);
+                        rd = komanda.ExecuteReader();
+                        while (rd.Read())
+                        {
+                            tbSifra.Text = rd[0].ToString();
+                            tbIme.Text = rd[1].ToString();
+                            tbPrezime.Text = rd[2].ToString();
+                            tbAdresa.Text = rd[3].ToString();
+                            tbTelefon.Text = rd[4].ToString();
+                            cmbGrad.Text = rd[5].ToString();
+
+                        }
+                    }
+                   
+                    komanda.Dispose();
+                    konek.Close();
+                }
+            }
+            else
+            {
+                tbIme.Text = tbPrezime.Text = tbAdresa.Text = tbSifra.Text = tbTelefon.Text = "";
+                cmbGrad.Text = "";
+            }
+        }
